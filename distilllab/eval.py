@@ -6,8 +6,14 @@
 - direct: one-hot labels. distill: teacher soft targets at temperature T
   blended with the label (alpha). control: teacher soft targets for a
   DIFFERENT, deterministically permuted input - same target distribution,
-  zero input-specific information. ablation_t1: same as distill but T=1,
+  zero input-specific information. pseudo: the teacher's argmax predictions
+  as hard labels on the SAME inputs (input-specific teacher signal with no
+  distribution content). smoothing: one-hot labels smoothed toward uniform
+  (input-INDEPENDENT softening). ablation_t1: same as distill but T=1,
   where soft targets carry almost no similarity information.
+  Together these decompose the distillation gain: pseudo - direct is the
+  teacher-prediction component; distill - pseudo is the non-target-class
+  distribution component (dark knowledge proper) on this fixture.
 """
 
 from __future__ import annotations
@@ -32,6 +38,16 @@ def train_teacher(data) -> MLP:
     return t
 
 
+SMOOTH_EPS = 0.1
+
+
+def _smoothed_grads(s: MLP, x, y: int, eps: float):
+    from .mlp import softmax
+    p = softmax(s.logits(x))
+    tgt = [eps / N_CLASSES + (1.0 - eps) * (1.0 if k == y else 0.0) for k in range(N_CLASSES)]
+    return s.backprop(x, [pi - ti for pi, ti in zip(p, tgt)])
+
+
 def train_student(data, mode: str, teacher: MLP, temperature: float = TEMPERATURE,
                   alpha: float = ALPHA, perm=None) -> MLP:
     s = MLP(DIM, STUDENT_HIDDEN, N_CLASSES, random.Random(5))
@@ -46,6 +62,10 @@ def train_student(data, mode: str, teacher: MLP, temperature: float = TEMPERATUR
                 xc, _ = data[perm[i]]
                 s.apply_grads(distill_grads(s, x, soft_targets(teacher, xc, temperature), y,
                                             temperature, alpha), LR)
+            elif mode == "pseudo":
+                s.apply_grads(hard_grads(s, x, teacher.predict(x)), LR)
+            elif mode == "smoothing":
+                s.apply_grads(_smoothed_grads(s, x, y, SMOOTH_EPS), LR)
             else:
                 raise ValueError(mode)
     return s
@@ -63,6 +83,8 @@ def run_evaluation() -> dict:
     direct = train_student(small, "direct", teacher)
     distilled = train_student(small, "distill", teacher)
     control = train_student(small, "control", teacher, temperature=CONTROL_TEMPERATURE, perm=perm)
+    pseudo = train_student(small, "pseudo", teacher)
+    smoothing = train_student(small, "smoothing", teacher)
     abl_t1 = train_student(small, "distill", teacher, temperature=1.0)
 
     r = {
@@ -74,11 +96,15 @@ def run_evaluation() -> dict:
         "distilled_acc": distilled.accuracy(test),
         "distilled_train_acc": distilled.accuracy(small),
         "control_acc": control.accuracy(test),
+        "pseudo_acc": pseudo.accuracy(test),
+        "smoothing_acc": smoothing.accuracy(test),
         "ablation_t1_acc": abl_t1.accuracy(test),
         "kl_direct": mean_kl(direct, teacher, test),
         "kl_distilled": mean_kl(distilled, teacher, test),
     }
     r["distill_gain"] = r["distilled_acc"] - r["direct_acc"]
+    r["teacher_signal_component"] = r["pseudo_acc"] - r["direct_acc"]
+    r["dark_knowledge_component"] = r["distilled_acc"] - r["pseudo_acc"]
     r["overfit_gap_direct"] = r["direct_train_acc"] - r["direct_acc"]
     r["overfit_gap_distilled"] = r["distilled_train_acc"] - r["distilled_acc"]
     return r
@@ -90,6 +116,9 @@ def format_terminal(r: dict) -> str:
         f"Student (direct) test accuracy: {r['direct_acc']:.4f}   train {r['direct_train_acc']:.4f}",
         f"Student (distilled) accuracy:   {r['distilled_acc']:.4f}   train {r['distilled_train_acc']:.4f}   ({r['student_params']} params)",
         f"Distillation gain:              {r['distill_gain']:+.4f}",
+        f"Pseudo-labels (teacher argmax): {r['pseudo_acc']:.4f}   -> teacher-signal component {r['teacher_signal_component']:+.4f}",
+        f"Dark-knowledge component:       {r['dark_knowledge_component']:+.4f}   (distilled minus pseudo)",
+        f"Label smoothing (uniform eps):  {r['smoothing_acc']:.4f}",
         f"Control (mismatched targets):   {r['control_acc']:.4f}",
         f"Ablation T=1:                   {r['ablation_t1_acc']:.4f}   (vs T=4: {r['distilled_acc']:.4f})",
         f"KL(teacher||student):           direct {r['kl_direct']:.4f}   distilled {r['kl_distilled']:.4f}",

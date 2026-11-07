@@ -13,10 +13,14 @@ Knowledge distillation, dependency-free.
   FD-verified in tests/test_gradients.py.
 - eval.py: teacher hidden 64 / 100 epochs; students hidden 6 / 150 epochs, lr 0.02.
   Arms: direct, distill (T=4, alpha=0.95), control (targets from permuted inputs,
-  perm seed 99), T=1 ablation. Metrics: accuracy, train/test gap, KL, param counts.
-- cli.py: evaluate (terminal/json) and gates; control is gated from above
-  (it must NOT learn), everything else from below.
+  perm seed 99), pseudo (teacher argmax as hard labels), smoothing (eps=0.1
+  toward uniform), T=1 ablation. Metrics: accuracy, train/test gap, KL, params.
+  Gain decomposition: pseudo - direct (teacher-signal), distill - pseudo
+  (non-target-class distribution content, i.e. dark knowledge on this fixture).
+- cli.py: evaluate (terminal/json) and gates on the primary arms
+  (teacher strength, distillation gain); controls are reported, not gated.
 
 Measured on the checked-in fixture: teacher 0.8344; direct 0.6813 (train 1.0);
-distilled 0.7469 (train 0.8); control 0.1250 = chance; T=1 0.7219;
-KL 1.0932 -> 0.9563; gain +0.0656. Pinned in tests; gates in demo.sh.
+distilled 0.7469 (train 0.8); pseudo 0.7094; smoothing 0.6781; control 0.1250
+= chance; T=1 0.7219; KL 1.0932 -> 0.9563; gain +0.0656 decomposed as
++0.0281 teacher-signal + +0.0375 dark-knowledge component. Pinned in tests.
