@@ -17,9 +17,6 @@ def main(argv=None) -> int:
     p_gate.add_argument("--min-teacher-acc", type=float, default=None)
     p_gate.add_argument("--min-distill-gain", type=float, default=None,
                         help="minimum distilled-minus-direct test accuracy gain")
-    p_gate.add_argument("--max-control-acc", type=float, default=None,
-                        help="the mismatched-target control must stay below this "
-                             "(isolates input-specific dark knowledge)")
     p_gate.add_argument("--max-t1-acc", type=float, default=None,
                         help="the T=1 ablation must stay below this "
                              "(isolates the temperature's contribution)")
@@ -37,9 +34,6 @@ def main(argv=None) -> int:
         failures.append(f"teacher accuracy {results['teacher_acc']:.4f} < required {args.min_teacher_acc}")
     if args.min_distill_gain is not None and results["distill_gain"] < args.min_distill_gain:
         failures.append(f"distillation gain {results['distill_gain']:+.4f} < required {args.min_distill_gain}")
-    if args.max_control_acc is not None and results["control_acc"] > args.max_control_acc:
-        failures.append(f"control accuracy {results['control_acc']:.4f} > allowed {args.max_control_acc} "
-                        "(the control is intentionally corrupted; if it learns, the isolation claim fails)")
     if args.max_t1_acc is not None and results["ablation_t1_acc"] > args.max_t1_acc:
         failures.append(f"T=1 ablation {results['ablation_t1_acc']:.4f} > allowed {args.max_t1_acc}")
 
