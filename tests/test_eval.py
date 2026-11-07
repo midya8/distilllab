@@ -14,15 +14,15 @@ class TestEvaluation(unittest.TestCase):
     def test_distillation_gain_is_real(self):
         self.assertGreaterEqual(self.r["distill_gain"], 0.04)
 
-    def test_teacher_signal_component_positive(self):
+    def test_pseudo_exceeds_direct(self):
         # deterministic fixture regression: pseudo-labels (teacher argmax)
         # beat direct training on this fixture.
-        self.assertGreaterEqual(self.r["teacher_signal_component"], 0.01)
+        self.assertGreaterEqual(self.r["pseudo_gain_over_direct"], 0.01)
 
-    def test_dark_knowledge_component_positive(self):
-        # the distribution content beyond the teacher's own predictions adds
-        # a further measured gain on this fixture.
-        self.assertGreaterEqual(self.r["dark_knowledge_component"], 0.02)
+    def test_distilled_exceeds_pseudo(self):
+        # deterministic fixture regression: distilled exceeds pseudo-labels
+        # on this fixture (a measured difference, not causal attribution).
+        self.assertGreaterEqual(self.r["distill_gain_over_pseudo"], 0.02)
 
     def test_t1_ablation_direction(self):
         # T=1 keeps the teacher's argmax supervision but sheds similarity
