@@ -15,12 +15,13 @@ Knowledge distillation, dependency-free.
   Arms: direct, distill (T=4, alpha=0.95), control (targets from permuted inputs,
   perm seed 99), pseudo (teacher argmax as hard labels), smoothing (eps=0.1
   toward uniform), T=1 ablation. Metrics: accuracy, train/test gap, KL, params.
-  Gain decomposition: pseudo - direct (teacher-signal), distill - pseudo
-  (non-target-class distribution content, i.e. dark knowledge on this fixture).
+  Between-arm comparisons: pseudo - direct and distill - pseudo
+  (descriptive differences on this fixture, not causal components).
 - cli.py: evaluate (terminal/json) and gates on the primary arms
   (teacher strength, distillation gain); controls are reported, not gated.
 
 Measured on the checked-in fixture: teacher 0.8344; direct 0.6813 (train 1.0);
 distilled 0.7469 (train 0.8); pseudo 0.7094; smoothing 0.6781; control 0.1250
-= chance; T=1 0.7219; KL 1.0932 -> 0.9563; gain +0.0656 decomposed as
-+0.0281 teacher-signal + +0.0375 dark-knowledge component. Pinned in tests.
+= chance; T=1 0.7219; KL 1.0932 -> 0.9563; gain +0.0656, with pseudo +0.0281
+over direct and distilled +0.0375 over pseudo. Arm ordering pinned in tests
+as fixture regression, not causal attribution.
