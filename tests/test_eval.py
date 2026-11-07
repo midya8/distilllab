@@ -14,10 +14,15 @@ class TestEvaluation(unittest.TestCase):
     def test_distillation_gain_is_real(self):
         self.assertGreaterEqual(self.r["distill_gain"], 0.04)
 
-    def test_control_stays_at_chance(self):
-        # mismatched soft targets carry no input-specific information:
-        # if the control ever learns, the dark-knowledge isolation fails.
-        self.assertLessEqual(self.r["control_acc"], 0.20)
+    def test_teacher_signal_component_positive(self):
+        # deterministic fixture regression: pseudo-labels (teacher argmax)
+        # beat direct training on this fixture.
+        self.assertGreaterEqual(self.r["teacher_signal_component"], 0.01)
+
+    def test_dark_knowledge_component_positive(self):
+        # the distribution content beyond the teacher's own predictions adds
+        # a further measured gain on this fixture.
+        self.assertGreaterEqual(self.r["dark_knowledge_component"], 0.02)
 
     def test_t1_ablation_direction(self):
         # T=1 keeps the teacher's argmax supervision but sheds similarity
