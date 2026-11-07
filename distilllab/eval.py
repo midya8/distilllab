@@ -11,9 +11,10 @@
   distribution content). smoothing: one-hot labels smoothed toward uniform
   (input-INDEPENDENT softening). ablation_t1: same as distill but T=1,
   where soft targets carry almost no similarity information.
-  Together these decompose the distillation gain: pseudo - direct is the
-  teacher-prediction component; distill - pseudo is the non-target-class
-  distribution component (dark knowledge proper) on this fixture.
+  Together these give measured between-arm comparisons: pseudo - direct and
+  distill - pseudo are descriptive accuracy differences on this fixture, not
+  independent causal components or uniquely identified mechanisms - soft
+  targets also change target confidence and the optimization problem.
 """
 
 from __future__ import annotations
@@ -103,8 +104,8 @@ def run_evaluation() -> dict:
         "kl_distilled": mean_kl(distilled, teacher, test),
     }
     r["distill_gain"] = r["distilled_acc"] - r["direct_acc"]
-    r["teacher_signal_component"] = r["pseudo_acc"] - r["direct_acc"]
-    r["dark_knowledge_component"] = r["distilled_acc"] - r["pseudo_acc"]
+    r["pseudo_gain_over_direct"] = r["pseudo_acc"] - r["direct_acc"]
+    r["distill_gain_over_pseudo"] = r["distilled_acc"] - r["pseudo_acc"]
     r["overfit_gap_direct"] = r["direct_train_acc"] - r["direct_acc"]
     r["overfit_gap_distilled"] = r["distilled_train_acc"] - r["distilled_acc"]
     return r
@@ -116,8 +117,8 @@ def format_terminal(r: dict) -> str:
         f"Student (direct) test accuracy: {r['direct_acc']:.4f}   train {r['direct_train_acc']:.4f}",
         f"Student (distilled) accuracy:   {r['distilled_acc']:.4f}   train {r['distilled_train_acc']:.4f}   ({r['student_params']} params)",
         f"Distillation gain:              {r['distill_gain']:+.4f}",
-        f"Pseudo-labels (teacher argmax): {r['pseudo_acc']:.4f}   -> teacher-signal component {r['teacher_signal_component']:+.4f}",
-        f"Dark-knowledge component:       {r['dark_knowledge_component']:+.4f}   (distilled minus pseudo)",
+        f"Pseudo-labels (teacher argmax): {r['pseudo_acc']:.4f}   ({r['pseudo_gain_over_direct']:+.4f} over direct)",
+        f"Distilled vs pseudo-labels:     {r['distill_gain_over_pseudo']:+.4f}   (descriptive, not causal attribution)",
         f"Label smoothing (uniform eps):  {r['smoothing_acc']:.4f}",
         f"Control (mismatched targets):   {r['control_acc']:.4f}",
         f"Ablation T=1:                   {r['ablation_t1_acc']:.4f}   (vs T=4: {r['distilled_acc']:.4f})",
