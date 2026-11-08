@@ -1,5 +1,15 @@
 [project]
 name = "distilllab"
-version = "0.1.0"
+version = "0.2.0"
 description = "Knowledge distillation from scratch with measured dark-knowledge transfer"
 requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["distilllab*"]
+
+[tool.setuptools.package-data]
+distilllab = ["step_data/*.json", "step_data/*.gz", "step_data/*.md"]

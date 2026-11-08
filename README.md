@@ -58,3 +58,22 @@ Everything here is a small synthetic classification fixture: real distillation r
 ## License
 
 MIT
+
+## v0.2: inspect one real student update
+
+[Live gradient inspector](https://midya8.github.io/distilllab/) · [Equations, input/report schema and limits](STEP.md)
+
+Select one of the six original trained student arms (or its untrained initialization), any of the 80 original student-training rows, T, alpha and a step size. Independent native and browser arithmetic expose the hard/soft class derivatives, all 254 parameter updates, hidden activations, selected-row CE/KL and every prediction on the original 80 training/320 test rows. Every entered state starts from the selected original model. No test label enters its gradient. Full input/report JSON is copyable/downloadable and compatible with the new `step-audit` command.
+
+A supplied two-hidden-unit control visibly overshoots: loss rises from 1.3466 to 3.6897 at eta=2 despite a negative local directional derivative. This is an arithmetic counterexample, not a new trained arm. The inspector uses stable, unclipped logit-space losses; the original probability-clipped helper functions, original gradients, training, controls and results stay unchanged. Their distinction below the 1e-12 probability floor is explicit in STEP.md.
+
+24 Python tests (the original 12 retained), four Node/actual-Chrome tests, 36 complete native/browser witnesses, 160 independent 70-digit Decimal logit controls, 80 uniform-class controls and all-parameter finite differences check the implementation. Witnesses expose 8,900 parameter updates and 14,001 evaluation positions. Installed wheel reproduction rebuilds the original teacher/six student fits, full data/logits/report and every witness outside the checkout.
+
+```bash
+python -m distilllab step-audit input.json --temperature 4 --alpha .95 --step .02
+python -m distilllab step-demo regenerated
+node --test tests/test_step.cjs tests/test_step_browser.cjs
+bash examples/verify_wheel.sh
+```
+
+One finite step is not a training run, a guarantee of improvement or a causal explanation of distillation's gain. Temperature changes both targets and objective scale. Original synthetic test metrics are descriptive, not new held-out evidence or a deployment guarantee. Standard distillation and backpropagation are attributed to the sources in STEP.md; no new method is claimed.

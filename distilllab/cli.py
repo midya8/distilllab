@@ -20,7 +20,38 @@ def main(argv=None) -> int:
     p_gate.add_argument("--max-t1-acc", type=float, default=None,
                         help="the T=1 ablation must stay below this "
                              "(isolates the temperature's contribution)")
+    p_step = sub.add_parser("step-audit", help="audit one simultaneous student parameter update")
+    p_step.add_argument("input")
+    p_step.add_argument("--temperature", type=float, default=4.0)
+    p_step.add_argument("--alpha", type=float, default=0.95)
+    p_step.add_argument("--step", type=float, default=0.02)
+    p_demo = sub.add_parser("step-demo", help="regenerate original frozen models and step witnesses")
+    p_demo.add_argument("output")
     args = ap.parse_args(argv)
+    if args.command == "step-demo":
+        from .step_fixtures import write_archive
+        fixture, manifest = write_archive(args.output)
+        print(json.dumps({"original_report": fixture["original_report"], "witnesses": len(manifest)}, indent=2))
+        return 0
+    if args.command == "step-audit":
+        from .step import audit
+        from pathlib import Path
+        def pairs(items):
+            result = {}
+            for key, value in items:
+                if key in result:
+                    raise ValueError("duplicate JSON key: " + key)
+                result[key] = value
+            return result
+        try:
+            text = Path(args.input).read_text()
+            if len(text) > 1500000:
+                raise ValueError("JSON exceeds 1.5 MB")
+            payload = json.loads(text, object_pairs_hook=pairs, parse_constant=lambda x: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+            print(json.dumps(audit(payload, args.temperature, args.alpha, args.step), indent=2, allow_nan=False))
+            return 0
+        except (ValueError, TypeError, KeyError, IndexError, OSError) as exc:
+            ap.error(str(exc))
 
     results = run_evaluation()
 

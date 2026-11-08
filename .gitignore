@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+# Local packaging output
+build/
+*.egg-info/
