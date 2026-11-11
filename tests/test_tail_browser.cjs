@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),zlib=require('node:zlib'),{spawn,spawnSync}=require('node:child_process'),{waitForDebugger}=require('./chrome_support.js');
-const data=JSON.parse(fs.readFileSync(path.join(__dirname,'../distilllab/tail_data/examples.json'))),witnesses=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(__dirname,'../distilllab/tail_data/witnesses.json.gz'))));
+const data=JSON.parse(fs.readFileSync(path.join(__dirname,'../distilllab/tail_data/examples.json'))),witnesses=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(__dirname,'../distilllab/tail_data/1-witnesses.json.gz'))));
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 function equal(a,b,p='root'){assert.equal(typeof a,typeof b,p);if(typeof a==='number')assert.ok(Number.isFinite(b)&&Math.abs(a-b)<=2e-9+2e-9*Math.max(Math.abs(a),Math.abs(b)),p+': '+a+' '+b);else if(a===null||typeof a!=='object')assert.equal(a,b,p);else{assert.deepEqual(Object.keys(a).sort(),Object.keys(b).sort(),p);for(const k of Object.keys(a))equal(a[k],b[k],p+'.'+k);}}
 test('actual Chrome: all target-tail reports, every table value/coordinate, trusted downloads and stale-state refusal',{timeout:240000},async()=>{
