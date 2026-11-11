@@ -170,7 +170,15 @@ class TailArchiveTests(unittest.TestCase):
 
     def test_archive_replay_all_witnesses_and_single_leaf_forgeries(self):
         from distilllab.tail import verify_archive
-        from distilllab.tail_fixtures import examples
+        from distilllab.tail_fixtures import examples,build
+        from importlib.resources import files
+        with tempfile.TemporaryDirectory() as directory:
+            build(directory)
+            packed=files('distilllab').joinpath('tail_data')
+            generated=Path(directory,'1-witnesses.json.gz').read_bytes()
+            self.assertEqual(generated[:10],bytes([31,139,8,0,0,0,0,0,2,255]))
+            self.assertEqual(generated,packed.joinpath('1-witnesses.json.gz').read_bytes())
+            self.assertEqual(Path(directory,'examples.json').read_bytes(),packed.joinpath('examples.json').read_bytes())
         checked=0
         for c in examples()['examples']:
             p={'schema':'distilllab.tail.archive.v1','input':c['input'],'report':audit(c['input'])}
