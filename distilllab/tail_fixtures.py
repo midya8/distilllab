@@ -1,6 +1,7 @@
 """Inputs copied from original packaged states, plus explicit arithmetic controls."""
 import copy
 import gzip
+import io
 import json
 from importlib.resources import files
 from pathlib import Path
@@ -38,7 +39,12 @@ def build(root):
     root=Path(root);root.mkdir(parents=True,exist_ok=True)
     data=examples();reports=[{'id':c['id'],'report':audit(c['input'])} for c in data['examples']]
     (root/'examples.json').write_text(json.dumps(data,separators=(',',':'),allow_nan=False)+'\n')
-    (root/'1-witnesses.json.gz').write_bytes(gzip.compress((json.dumps(reports,separators=(',',':'),allow_nan=False)+'\n').encode(),mtime=0))
+    # GzipFile fixes OS=255 across Python 3.10-3.13. gzip.compress(mtime=0)
+    # delegates to zlib on 3.11/3.12 and can emit OS=3 instead.
+    compressed=io.BytesIO()
+    with gzip.GzipFile(filename='',mode='wb',fileobj=compressed,mtime=0) as stream:
+        stream.write((json.dumps(reports,separators=(',',':'),allow_nan=False)+'\n').encode())
+    (root/'1-witnesses.json.gz').write_bytes(compressed.getvalue())
     print(json.dumps({'examples':len(reports),'variants':sum(len(r['report']['variants']) for r in reports),
                       'parameter_positions':sum(len(v['parameters']) for r in reports for v in r['report']['variants'])}))
     return data
