@@ -38,7 +38,7 @@ def build(root):
     root=Path(root);root.mkdir(parents=True,exist_ok=True)
     data=examples();reports=[{'id':c['id'],'report':audit(c['input'])} for c in data['examples']]
     (root/'examples.json').write_text(json.dumps(data,separators=(',',':'),allow_nan=False)+'\n')
-    (root/'witnesses.json.gz').write_bytes(gzip.compress((json.dumps(reports,separators=(',',':'),allow_nan=False)+'\n').encode(),mtime=0))
+    (root/'1-witnesses.json.gz').write_bytes(gzip.compress((json.dumps(reports,separators=(',',':'),allow_nan=False)+'\n').encode(),mtime=0))
     print(json.dumps({'examples':len(reports),'variants':sum(len(r['report']['variants']) for r in reports),
                       'parameter_positions':sum(len(v['parameters']) for r in reports for v in r['report']['variants'])}))
     return data
