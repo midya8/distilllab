@@ -17,10 +17,10 @@ for name in ['cli','data','distill','eval','mlp','step','step_fixtures','tail','
     assert pathlib.Path(module.__file__).is_relative_to(pathlib.Path(sys.prefix))
 root=files('distilllab').joinpath('tail_data')
 examples=json.loads(root.joinpath('examples.json').read_text())
-witnesses=json.loads(gzip.decompress(root.joinpath('witnesses.json.gz').read_bytes()))
+witnesses=json.loads(gzip.decompress(root.joinpath('1-witnesses.json.gz').read_bytes()))
 build('regenerated')
 assert pathlib.Path('regenerated/examples.json').read_bytes()==root.joinpath('examples.json').read_bytes()
-assert pathlib.Path('regenerated/witnesses.json.gz').read_bytes()==root.joinpath('witnesses.json.gz').read_bytes()
+assert pathlib.Path('regenerated/1-witnesses.json.gz').read_bytes()==root.joinpath('1-witnesses.json.gz').read_bytes()
 for c,w in zip(examples['examples'],witnesses):
     assert c['id']==w['id']
     path=pathlib.Path('input.json');path.write_text(json.dumps(c['input']))
