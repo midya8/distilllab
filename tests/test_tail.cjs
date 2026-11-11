@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),zlib=require('node:zlib');
 const engine=require('../docs/tail-engine.js');
 const data=JSON.parse(fs.readFileSync(path.join(__dirname,'../distilllab/tail_data/examples.json')));
-const witnesses=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(__dirname,'../distilllab/tail_data/witnesses.json.gz'))));
+const witnesses=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(__dirname,'../distilllab/tail_data/1-witnesses.json.gz'))));
 let fields=0;
 function match(a,b,p='root'){
  assert.equal(typeof a,typeof b,p);if(typeof a==='number'){fields++;assert.ok(Number.isFinite(a)&&Number.isFinite(b),p);assert.ok(Math.abs(a-b)<=2e-9+2e-9*Math.max(Math.abs(a),Math.abs(b)),p+': '+a+' vs '+b);}
