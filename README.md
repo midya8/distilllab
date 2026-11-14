@@ -1,13 +1,24 @@
 # DistillLab
 
-Knowledge distillation from scratch: a large teacher trained on abundant data, a 10x smaller student trained on a small split, and the measured gain compared against matched control arms. No ML frameworks.
+Knowledge distillation with manual gradients on a small synthetic classification fixture. A teacher with 2,632 parameters trains on 800 rows; students with 254 parameters train on 80. Matched arms compare direct labels, teacher targets and controls. No ML frameworks.
 
-## What it does
+## Choose an experiment
 
-- Builds a ring-structured classification fixture: eight classes in 32 dimensions where each class center blends in its predecessor's direction, so neighboring classes are genuinely similar. A teacher's soft targets then carry per-sample information about class similarity that one-hot labels cannot.
+| Question | Entry point | Scope |
+| --- | --- | --- |
+| How do the fixed training arms compare? | `evaluate`, `gates` | Descriptive results on one synthetic fixture |
+| What happens in one student update? | `step-audit`, browser step inspector | Local derivatives, finite update and evaluation changes |
+| How do target mass and conditional tail contribute to KL? | `distilllab-tail`, browser tail inspector | Established decomposition and four fixed-mass tail variants |
+
+The step and tail tools do not retrain the original arms or identify the cause
+of their accuracy differences.
+
+## Training setup
+
+- Builds a ring-structured classification fixture: eight classes in 32 dimensions where each class center blends in its predecessor's direction, so adjacent class centers share a direction. Teacher soft targets vary by input; the arm comparisons below do not isolate which target properties explain the differences.
 - Trains the teacher (hidden 64) on 100 samples per class, and students (hidden 6, 254 params vs 2632) on only 10 per class - the regime where distillation is supposed to matter.
 - Implements the full combined loss by hand: `alpha * T^2 * CE(softmax(z/T), soft_targets) + (1 - alpha) * CE(softmax(z), label)`, with the logit gradient `alpha * T * (p_s^T - p_t^T) + (1 - alpha) * (p_s - onehot)` derived and finite-difference verified in the suite.
-- Runs five student arms with identical seeds, capacity, and optimizer budget: direct (one-hot), distilled (teacher soft targets at T=4, alpha=0.95), pseudo-labels (the teacher's argmax predictions as hard labels on the same inputs), uniform label smoothing (input-independent softening), and a control whose soft targets come from *different, permuted inputs* - same target distribution, zero input-specific information.
+- Runs five student arms with identical seeds, capacity, and optimizer budget: direct (one-hot), distilled (teacher soft targets at T=4, alpha=0.95), pseudo-labels (the teacher's argmax predictions as hard labels on the same inputs), uniform label smoothing (input-independent softening), and a control whose soft targets come from *different, permuted inputs* - the same multiset of targets, with the original input-target pairing removed.
 
 ## Measured results (checked-in fixture, pinned in tests)
 
@@ -25,13 +36,13 @@ KL(teacher||student):           direct 1.0932   distilled 0.9563
 Overfit gap (train - test):     direct 0.3187   distilled 0.0531
 ```
 
-What the fixture shows, stated plainly:
+For this fixed fixture:
 
-- Distillation buys real generalization on this fixture: +0.0656 test accuracy over direct training at identical capacity and budget, recovering part of the gap toward the teacher (0.8344) with a 10x smaller model and a tenth of its training data.
+- The distilled arm has higher test accuracy on this fixture: +0.0656 test accuracy over direct training at identical capacity and budget, recovering part of the gap toward the teacher (0.8344) with a 10x smaller model and a tenth of its training data.
 - The measured train-test gap is smaller: the direct student memorizes its 80 training samples (train 1.0000, gap 0.3187) while the distilled student does not (train 0.8000, gap 0.0531) and generalizes better.
 - The arms separate on this fixture, but the differences are measured comparisons, not causal identification. Pseudo-label training on the teacher's argmax exceeds direct by +0.0281, and full soft-label distillation exceeds pseudo-labels by a further +0.0375 - consistent with the non-target-class distribution carrying usable information, though this comparison alone does not isolate why (soft targets also change target confidence and the optimization problem). Uniform label smoothing at eps=0.1 adds nothing (-0.0032 vs direct) - one setting, which cannot rule out input-dependent smoothing or other settings. The permuted-target control lands at exactly chance (0.1250). The suite pins the arm ordering from below as deterministic fixture regression.
 - Temperature matters, modestly here: T=1 keeps the teacher's argmax supervision and still helps (0.7219 vs 0.6813 direct), and T=4 adds +0.0250 more. The suite pins the direction, not a large effect.
-- The distilled student's predictive distribution is closer to the teacher's (KL 0.9563 vs 1.0932) - it is genuinely imitating, not just scoring higher.
+- The distilled student's predictive distribution is closer to the teacher's (KL 0.9563 vs 1.0932) - a distributional comparison, not an independent measure of explanation or deployment quality.
 
 ## CLI
 
@@ -49,7 +60,7 @@ python -m unittest discover -s tests
 bash examples/demo.sh
 ```
 
-12 tests. No dependencies beyond Python 3.10+.
+The original release had 12 tests. The current suite has 36 Python tests and seven substantive Node/Chrome tests (eight runner entries including a helper). No dependencies beyond Python 3.10+.
 
 ## Limitations
 
@@ -59,7 +70,7 @@ Everything here is a small synthetic classification fixture: real distillation r
 
 MIT
 
-## v0.2: inspect one real student update
+## One student update (v0.2)
 
 [Live gradient inspector](https://midya8.github.io/distilllab/) · [Equations, input/report schema and limits](STEP.md)
 
@@ -78,7 +89,7 @@ bash examples/verify_wheel.sh
 
 One finite step is not a training run, a guarantee of improvement or a causal explanation of distillation's gain. Temperature changes both targets and objective scale. Original synthetic test metrics are descriptive, not new held-out evidence or a deployment guarantee. Standard distillation and backpropagation are attributed to the sources in STEP.md; no new method is claimed.
 
-## v0.3: keep the confidence, change the tail
+## Target/rest KL decomposition (v0.3)
 
 A separate target/rest KL workbench audits the established chain rule. Reproduction passes 36 Python tests retaining all 24 earlier tests and seven substantive Node/Chrome tests (eight runner entries including the existing fixture helper). Twenty-eight full witnesses cover 112 variants, 21,724 parameter positions and 286,603 cross-runtime numeric fields. Actual Chrome checks all 84 control-width layouts, 545,388 displayed numeric table cells, 65,172 coordinate selections and six completed downloads, with three archives replayed natively. Fresh installed wheels check both new entrypoints and all original training/step reproduction unchanged. It decomposes the exact coupled KL loss and every student-parameter gradient, then compares four teacher-tail distributions with the same target/rest mass at the selected temperature. The browser uses independent scalar reverse-mode automatic differentiation, not saved native gradients. The original trainer, six trained student arms, data, reports and one-step inspector remain unchanged.
 
