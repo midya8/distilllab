@@ -60,7 +60,29 @@ python -m unittest discover -s tests
 bash examples/demo.sh
 ```
 
-The original release had 12 tests. The current suite has 36 Python tests and seven substantive Node/Chrome tests (eight runner entries including a helper). No dependencies beyond Python 3.10+.
+The original release had 12 tests. The current suite has 40 Python tests and seven substantive Node/Chrome tests (eight runner entries including a helper). No dependencies beyond Python 3.10+.
+
+## Hidden-unit labels are not features
+
+A tanh hidden unit can be moved to another column, or have its incoming weights,
+bias and outgoing weights all sign-flipped, without changing the network's
+function. The step and tail engines now have four regression tests for this
+signed-permutation symmetry. They check logits, loss components, every gradient
+component, transformed updated parameters and the selected evaluation rows.
+Hidden activations and gradients change coordinates; they are not expected to
+remain equal entry by entry under the old labels.
+
+The checks use all seven saved student/initial models at three training rows
+and two signed bases, 24 generated controls across temperature, alpha and step
+endpoints, and one-unit saturated-tanh controls. Flipping only the incoming
+side is shown to change the function. All four teacher-tail variants retain
+their original class ordering and target meaning; no class permutation or
+rotation-invariance claim is made. This is a finite consistency check, not
+an independent proof of backpropagation or a new training result.
+
+The original engine, data, fitted arms, saved witnesses, CLI schemas and browser
+computations stay unchanged. The current Python suite has 40 tests; the Node
+runner still reports eight entries, seven substantive tests plus its helper.
 
 ## Limitations
 
