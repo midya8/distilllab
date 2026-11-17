@@ -1,4 +1,4 @@
-# DistillLab
+# Knowledge distillation
 
 Knowledge distillation with manual gradients on a small synthetic classification fixture. A teacher with 2,632 parameters trains on 800 rows; students with 254 parameters train on 80. Matched arms compare direct labels, teacher targets and controls. No ML frameworks.
 
@@ -94,7 +94,7 @@ MIT
 
 ## One student update (v0.2)
 
-[Live gradient inspector](https://midya8.github.io/distilllab/) · [Equations, input/report schema and limits](STEP.md)
+[Live gradient inspector](https://midya8.github.io/knowledge-distillation/) · [Equations, input/report schema and limits](STEP.md)
 
 Select one of the six original trained student arms (or its untrained initialization), any of the 80 original student-training rows, T, alpha and a step size. Independent native and browser arithmetic expose the hard/soft class derivatives, all 254 parameter updates, hidden activations, selected-row CE/KL and every prediction on the original 80 training/320 test rows. Every entered state starts from the selected original model. No test label enters its gradient. Full input/report JSON is copyable/downloadable and compatible with the new `step-audit` command.
 
