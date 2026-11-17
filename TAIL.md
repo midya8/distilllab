@@ -1,8 +1,8 @@
 # Target/rest KL and conditional-tail gradients
 
-DistillLab 0.3 is a separate arithmetic workbench. It does not change the original trainer, six student arms, frozen models, earlier tests or the original one-step inspector. It implements an established KL chain rule, not a new distillation method or a DKD training run.
+Knowledge distillation 0.3 is a separate arithmetic workbench. It does not change the original trainer, six student arms, frozen models, earlier tests or the original one-step inspector. It implements an established KL chain rule, not a new distillation method or a DKD training run.
 
-[Browser workbench](https://midya8.github.io/distilllab/tail.html)
+[Browser workbench](https://midya8.github.io/knowledge-distillation/tail.html)
 
 ## Exact identity and derivatives
 
